@@ -1,0 +1,29 @@
+## Interface: 80000
+## Title: |cffffff9aBlink's|r Health Text
+## Title-koKR: |cffffff9a블링크|r 체력텍스트
+## Notes-koKR: 자신의 체력과 대상의 체력을 보여줍니다.
+## Notes: Displays player and target's health/power text HUD.
+## Author: Blink
+## OptionalDeps: Blink
+## SavedVariablesPerCharacter: BlinkHealthTextDB
+
+embeds.xml
+
+locales\enUS.lua
+locales\koKR.lua
+
+module\module.lua
+module\mage.lua
+module\warrior.lua
+module\rogue.lua
+module\druid.lua
+module\shaman.lua
+module\paladin.lua
+module\deathknight.lua
+module\priest.lua
+module\monk.lua
+module\hunter.lua
+module\warlock.lua
+module\demonhunter.lua
+
+BlinkHealthText.lua
