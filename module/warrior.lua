@@ -4,7 +4,7 @@ local module = _G["BlinkHealthTextModule"]
 -- WOW APIs/variables
 -------------------------------------------------------------------------------
 
-local GetLocale, AuraUtil = GetLocale, AuraUtil
+local GetLocale, AuraUtil, IsSpellKnown = GetLocale, AuraUtil, IsSpellKnown
 local UnitClass, UnitPower, UnitHealthMax, UnitStagger = UnitClass, UnitPower, UnitHealthMax, UnitStagger
 local GetSpecialization, GetSpellTabInfo, IsPassiveSpell = GetSpecialization, GetSpellTabInfo, IsPassiveSpell
 local GetSpellTexture, GetSpellInfo = GetSpellTexture, GetSpellInfo
@@ -161,7 +161,7 @@ function module:init()
     end
 
     if self.addon.db.class.use_activated_spells then
-        my_spells = scanSpells()
+        -- my_spells = scanSpells()
         -- print("스킬 스캔 완료 init")
         module:EnableActivatedSpell()
     end
@@ -233,13 +233,13 @@ end
 function module:PLAYER_SPECIALIZATION_CHANGED(...)
     local arg1 = ...;
     if arg1 == "player" then
-        my_spells = scanSpells()
+        -- my_spells = scanSpells()
         -- print("스킬 스캔 완료 PLAYER_SPECIALIZATION_CHANGED")
     end
 end
 
 function module:SPELLS_CHANGED(...)
-    my_spells = scanSpells()
+    -- my_spells = scanSpells()
     -- print("스킬 스캔 완료 SPELLS_CHANGED")
 end
 
@@ -251,7 +251,7 @@ function module:SPELL_ACTIVATION_OVERLAY_GLOW_SHOW(...)
     local spellID = ...;
     local icon = GetSpellTexture(spellID)
     -- local spellName = GetSpellInfo(spellID)
-    if icon and my_spells[spellID] then
+    if icon and IsSpellKnown(spellID) then
         -- print("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW", spellID, icon, spellName)
         if not activation_spells[icon] then
             activation_spells[icon] = 0
