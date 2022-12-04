@@ -220,14 +220,12 @@ function module:EnableActivatedSpell()
     activation_spells = {}
     self.addon.mainFrame:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW")
     self.addon.mainFrame:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_HIDE")
-    self.addon.mainFrame:RegisterEvent("SPELLS_CHANGED")
 end
 
 function module:DisableActivatedSpell()
     activation_spells = {}
     self.addon.mainFrame:UnregisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW")
     self.addon.mainFrame:UnregisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_HIDE")
-    self.addon.mainFrame:UnregisterEvent("SPELLS_CHANGED")
 end
 
 function module:PLAYER_SPECIALIZATION_CHANGED(...)
@@ -236,11 +234,6 @@ function module:PLAYER_SPECIALIZATION_CHANGED(...)
         -- my_spells = scanSpells()
         -- print("스킬 스캔 완료 PLAYER_SPECIALIZATION_CHANGED")
     end
-end
-
-function module:SPELLS_CHANGED(...)
-    -- my_spells = scanSpells()
-    -- print("스킬 스캔 완료 SPELLS_CHANGED")
 end
 
 function module:SPELL_ACTIVATION_OVERLAY_GLOW_SHOW(...)
