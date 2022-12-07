@@ -689,13 +689,13 @@ function addon:DisplayPowerText(unit)
     else
         perM = currValue / maxMana * 100
         if unit == "player" and self.db.unit.player.realPowerValue then
-            powerText = currValue
+            powerText = tostring(currValue)
         elseif unit == "pet" and self.db.unit.pet.realPowerValue then
-            powerText = currValue
+            powerText = tostring(currValue)
         elseif unit == "vehicle" and self.db.unit.pet.realPowerValue then -- @.@
-            powerText = currValue
+            powerText = tostring(currValue)
         elseif unit == "target" and self.db.unit.target.realPowerValue then
-            powerText = currValue
+            powerText = tostring(currValue)
         else
             powerText = string.format("%d", perM)
         end

@@ -200,7 +200,7 @@ end
 function module:SPELL_ACTIVATION_OVERLAY_GLOW_SHOW(...)
     local spellID, texture, positions, scale, r, g, b = ...;
     local icon = GetSpellTexture(spellID)
-    if icon then
+    if icon and IsSpellKnown(spellID) and IsPlayerSpell(spellID) then
         if not activation_spells[icon] then
             activation_spells[icon] = 0
         end

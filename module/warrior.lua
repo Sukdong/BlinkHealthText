@@ -4,7 +4,7 @@ local module = _G["BlinkHealthTextModule"]
 -- WOW APIs/variables
 -------------------------------------------------------------------------------
 
-local GetLocale, AuraUtil, IsSpellKnown = GetLocale, AuraUtil, IsSpellKnown
+local GetLocale, AuraUtil, IsSpellKnown, IsPlayerSpell = GetLocale, AuraUtil, IsSpellKnown, IsPlayerSpell
 local UnitClass, UnitPower, UnitHealthMax, UnitStagger = UnitClass, UnitPower, UnitHealthMax, UnitStagger
 local GetSpecialization, GetSpellTabInfo, IsPassiveSpell = GetSpecialization, GetSpellTabInfo, IsPassiveSpell
 local GetSpellTexture, GetSpellInfo = GetSpellTexture, GetSpellInfo
@@ -31,7 +31,6 @@ if GetLocale() == "koKR" then
     L_USE_WARRIOR_ACTIVATED_SPELL = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
 end
 
-local my_spells = {}
 local activation_spells = {}
 local config_added = false
 local name, icon, count, debufType, duration, expirationTime
@@ -70,85 +69,6 @@ local function focusedRageUpdator(unit, f1)
     end
 end
 
-local function scanSpells()
-    local currentActiveSpells = {}
-    local duplicateSpells = {}
-
-    -- Specialization spells (Active)
-    local name, texture, offset, numSpells = GetSpellTabInfo(3)
-    for id = 1, numSpells do
-        if not IsPassiveSpell(id + offset, "book") then
-            local spellName, _, icon, _, _, _, spellid = GetSpellInfo(id + offset, "book")
-            local slotType, slotid = GetSpellBookItemInfo(id + offset, "book")
-            if slotType == "FLYOUT" then
-                local _, _, numSlots, isKnown = GetFlyoutInfo(slotid)
-                for i = 1, numSlots do
-                    local foSpellID, foOverrideSpellID, foIsKnown, foSpellName, foSlotSpecID = GetFlyoutSlotInfo(slotid,
-                        i)
-                    if foIsKnown and not duplicateSpells[foSpellID] then
-                        currentActiveSpells[foSpellID] = { foSpellName, GetSpellTexture(foOverrideSpellID), foSpellID }
-                        duplicateSpells[foSpellID] = true
-                    end
-                end
-            elseif slotType == 'SPELL' then
-                if not duplicateSpells[spellid] then
-                    currentActiveSpells[spellid] = { spellName, icon, spellid }
-                    duplicateSpells[spellid] = true
-                end
-            end
-        end
-    end
-
-    -- Class common spells (Active)
-    name, texture, offset, numSpells = GetSpellTabInfo(2)
-    for id = 1, numSpells do
-        if not IsPassiveSpell(id + offset, "book") then
-            local spellName, _, icon, _, _, _, spellid = GetSpellInfo(id + offset, "book")
-            local slotType, slotid = GetSpellBookItemInfo(id + offset, "book")
-            -- spellid = addon:GetReplacementSpellId(spellid)
-            if slotType == "FLYOUT" then
-                local _, _, numSlots, isKnown = GetFlyoutInfo(slotid)
-                for i = 1, numSlots do
-                    local foSpellID, foOverrideSpellID, foIsKnown, foSpellName, foSlotSpecID = GetFlyoutSlotInfo(slotid,
-                        i)
-                    if foIsKnown and not duplicateSpells[foSpellID] then
-                        currentActiveSpells[foSpellID] = { foSpellName, GetSpellTexture(foOverrideSpellID), foSpellID }
-                        duplicateSpells[foSpellID] = true
-                    end
-                end
-            elseif slotType == 'SPELL' then
-                if not duplicateSpells[spellid] then
-                    currentActiveSpells[spellid] = { spellName, icon, spellid }
-                    duplicateSpells[spellid] = true
-                end
-            end
-        end
-    end
-
-    -- racial spells
-    name, texture, offset, numSpells = GetSpellTabInfo(1) -- general skill tab
-    for id = 1, numSpells do
-        if not IsPassiveSpell(id + offset, "book") then
-            local spellName, _, icon, _, _, _, spellid = GetSpellInfo(id + offset, "book")
-            local slotType, slotid = GetSpellBookItemInfo(id + offset, "book")
-            local subSpellName = GetSpellSubtext(spellid)
-            if slotType == 'SPELL' and subSpellName == "종족 특성" then
-                currentActiveSpells[spellid] = { spellName, icon, spellid }
-            end
-        end
-    end
-
-    -- for spellid, value in pairs(duplicateSpells) do
-    -- 	print(spellid, GetSpellInfo(spellid))
-    -- end
-    -- print("-------------------------")
-    -- for key, value in pairs(currentActiveSpells) do
-    -- 	print(value[3], GetSpellInfo(value[3]))
-    -- end
-
-    return currentActiveSpells
-end
-
 -------------------------------------------------------------------------------
 -- module functions
 -------------------------------------------------------------------------------
@@ -161,8 +81,6 @@ function module:init()
     end
 
     if self.addon.db.class.use_activated_spells then
-        -- my_spells = scanSpells()
-        -- print("스킬 스캔 완료 init")
         module:EnableActivatedSpell()
     end
 
@@ -228,14 +146,6 @@ function module:DisableActivatedSpell()
     self.addon.mainFrame:UnregisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_HIDE")
 end
 
-function module:PLAYER_SPECIALIZATION_CHANGED(...)
-    local arg1 = ...;
-    if arg1 == "player" then
-        -- my_spells = scanSpells()
-        -- print("스킬 스캔 완료 PLAYER_SPECIALIZATION_CHANGED")
-    end
-end
-
 function module:SPELL_ACTIVATION_OVERLAY_GLOW_SHOW(...)
     -- 분노: 마무리 일격 5308 -> override ID 280735
     -- 분노: 마무리 일격 163201
@@ -244,7 +154,7 @@ function module:SPELL_ACTIVATION_OVERLAY_GLOW_SHOW(...)
     local spellID = ...;
     local icon = GetSpellTexture(spellID)
     -- local spellName = GetSpellInfo(spellID)
-    if icon and IsSpellKnown(spellID) then
+    if icon and IsSpellKnown(spellID) and IsPlayerSpell(spellID) then
         -- print("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW", spellID, icon, spellName)
         if not activation_spells[icon] then
             activation_spells[icon] = 0

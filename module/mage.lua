@@ -4,7 +4,7 @@ local module = _G["BlinkHealthTextModule"]
 -- WOW APIs/variables
 -------------------------------------------------------------------------------
 
-local GetLocale, Enum = GetLocale, Enum
+local GetLocale, Enum, IsSpellKnown, IsPlayerSpell = GetLocale, Enum, IsSpellKnown, IsPlayerSpell
 local UnitClass, UnitPower, GetSpecialization = UnitClass, UnitPower, GetSpecialization
 local GetSpellTexture = GetSpellTexture
 local select = select
@@ -143,9 +143,9 @@ function module:DisableActivatedSpell()
 end
 
 function module:SPELL_ACTIVATION_OVERLAY_GLOW_SHOW(...)
-    local spellID, texture, positions, scale, r, g, b = ...;
+    local spellID = ...;
     local icon = GetSpellTexture(spellID)
-    if icon then
+    if icon and IsSpellKnown(spellID) and IsPlayerSpell(spellID) then
         if not activation_spells[icon] then
             activation_spells[icon] = 0
         end
@@ -202,6 +202,7 @@ end
 --	end
 --end
 
+-- @returns number
 function module:getPlayerText()
     if self.addon.db.class.show_arcane_count then
         if GetSpecialization() == 1 then
