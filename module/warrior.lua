@@ -6,10 +6,9 @@ local module = _G["BlinkHealthTextModule"]
 
 local GetLocale, AuraUtil, IsSpellKnown, IsPlayerSpell = GetLocale, AuraUtil, IsSpellKnown, IsPlayerSpell
 local UnitClass, UnitPower, UnitHealthMax, UnitStagger = UnitClass, UnitPower, UnitHealthMax, UnitStagger
-local GetSpecialization, GetSpellTabInfo, IsPassiveSpell = GetSpecialization, GetSpellTabInfo, IsPassiveSpell
-local GetSpellTexture, GetSpellInfo = GetSpellTexture, GetSpellInfo
+local GetSpecialization, GetSpellTabInfo = GetSpecialization, GetSpellTabInfo
 local GetSpellBookItemInfo, GetFlyoutInfo = GetSpellBookItemInfo, GetFlyoutInfo
-local GetFlyoutSlotInfo, GetSpellSubtext = GetFlyoutSlotInfo, GetSpellSubtext
+local GetFlyoutSlotInfo = GetFlyoutSlotInfo
 local select = select
 
 
@@ -152,8 +151,7 @@ function module:SPELL_ACTIVATION_OVERLAY_GLOW_SHOW(...)
     -- 분노: 마무리 일격 163201
     -- 분노: 규탄 330325
     local spellID = ...;
-    local icon = GetSpellTexture(spellID)
-    -- local spellName = GetSpellInfo(spellID)
+    local icon = C_Spell.GetSpellTexture(spellID)
     if icon and IsSpellKnown(spellID) and IsPlayerSpell(spellID) then
         -- print("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW", spellID, icon, spellName)
         if not activation_spells[icon] then
@@ -165,7 +163,7 @@ end
 
 function module:SPELL_ACTIVATION_OVERLAY_GLOW_HIDE(...)
     local spellID = ...;
-    local icon = GetSpellTexture(spellID)
+    local icon = C_Spell.GetSpellTexture(spellID)
     if icon and activation_spells and activation_spells[icon] then
         activation_spells[icon] = activation_spells[icon] - 1
         if activation_spells[icon] < 0 then

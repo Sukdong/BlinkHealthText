@@ -4,9 +4,9 @@ local module = _G["BlinkHealthTextModule"]
 -- WOW APIs/variables
 -------------------------------------------------------------------------------
 
-local GetLocale, Enum = GetLocale, Enum
+local GetLocale, Enum, AuraUtil = GetLocale, Enum, AuraUtil
 local UnitClass, UnitPower, UnitPowerType = UnitClass, UnitPower, UnitPowerType
-local GetSpellTexture = GetSpellTexture
+local IsSpellKnown, IsPlayerSpell = IsSpellKnown, IsPlayerSpell
 local select = select
 
 
@@ -26,6 +26,7 @@ local L_DRUID_CONFIG = "Druid Setting"
 local L_USE_COMBO = "Displays the number of combo points."
 local L_USE_COMBO_BESIDE_PLAYER = "Displays the number of combo points next to the Player's health text.(default: beside target's health text)"
 local L_USE_COMBO_BESIDE_PLAYER_DESC = "Check to display the number of combo points to the right of Player's health."
+local L_USE_THRASH = "곰의 난타 디버프 개수를 표시합니다."
 local L_USE_DRUID_ACTIVATED_SPELL = "Displays the spell icons when activating effect."
 
 -- koKR locale
@@ -34,6 +35,7 @@ if GetLocale() == "koKR" then
     L_USE_COMBO = "표범의 연계점수를 표시합니다."
     L_USE_COMBO_BESIDE_PLAYER = "표범의 연계점수를 플레이어 체력 텍스트 옆에 표시합니다."
     L_USE_COMBO_BESIDE_PLAYER_DESC = "체크하면 표범의 연계점수를 플레이어 체력 텍스트 오른쪽에 표시합니다."
+    L_USE_THRASH = "곰의 난타 디버프 개수를 표시합니다."
     L_USE_DRUID_ACTIVATED_SPELL = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
 end
 
@@ -62,14 +64,14 @@ function tcopy(to, from) -- "to" must be a table (possibly empty)
 end
 
 local function getComboText()
-    local combo = UnitPower("player", Enum.PowerType.ComboPoints)
-    local comboText, r, g, b = "", 1.0, 0.5, 0.1
-
-    if (combo <= 0) then
-        return ""
-    end
-
     if (UnitPowerType("player") == 3) then -- energy
+        local combo = UnitPower("player", Enum.PowerType.ComboPoints)
+        local comboText, r, g, b = "", 1.0, 0.5, 0.1
+
+        if (combo <= 0) then
+            return ""
+        end
+
         local mana = UnitPower("player")
         if (mana >= ComboSkill) then
             r = 0.1
@@ -84,8 +86,23 @@ local function getComboText()
             g = 0.1
             b = 0.1 -- red
         end
+        return (":|cff%02x%02x%02x%d|r"):format(r * 255, g * 255, b * 255, combo)
     end
-    return (":|cff%02x%02x%02x%d|r"):format(r * 255, g * 255, b * 255, combo)
+    return ""
+end
+
+local function getThrashCount()
+    if (UnitPowerType("player") == 1) then -- rage
+
+        local name, icon, count, debufType, duration, expirationTime = AuraUtil.FindAuraByName("난타", "target",
+            "TARGET|HARMFUL") -- UnitAura("player", "집중된 분노", nil, "PLAYER|HELPFUL")
+        local r, g, b = 1.0, 0.5, 0.1
+
+        if count and count > 0 then
+            return (":|cff%02x%02x%02x%d|r"):format(r * 255, g * 255, b * 255, count)
+        end
+    end
+    return ""
 end
 
 -------------------------------------------------------------------------------
@@ -149,6 +166,21 @@ function module:init()
         }
         self:AddMiscConfig {
             type = "toggle",
+            text = L_USE_THRASH,
+            tooltip = L_USE_THRASH,
+            get = function()
+                if self.addon and self.addon.db then
+                    return self.addon.db.class.use_thrash
+                end
+                return
+            end,
+            set = function(value)
+                self.addon.db.class.use_thrash = value
+            end,
+            needRefresh = true,
+        }
+        self:AddMiscConfig {
+            type = "toggle",
             text = L_USE_DRUID_ACTIVATED_SPELL,
             tooltip = L_USE_DRUID_ACTIVATED_SPELL,
             get = function()
@@ -180,9 +212,9 @@ function module:DisableActivatedSpell()
 end
 
 function module:SPELL_ACTIVATION_OVERLAY_GLOW_SHOW(...)
-    local spellID, texture, positions, scale, r, g, b = ...;
-    local icon = GetSpellTexture(spellID)
-    if icon then
+    local spellID = ...;
+    local icon = C_Spell.GetSpellTexture(spellID)
+    if icon and IsSpellKnown(spellID) and IsPlayerSpell(spellID) then
         if not activation_spells[icon] then
             activation_spells[icon] = 0
         end
@@ -192,7 +224,7 @@ end
 
 function module:SPELL_ACTIVATION_OVERLAY_GLOW_HIDE(...)
     local spellID = ...;
-    local icon = GetSpellTexture(spellID)
+    local icon = C_Spell.GetSpellTexture(spellID)
     if icon and activation_spells and activation_spells[icon] then
         activation_spells[icon] = activation_spells[icon] - 1
         if activation_spells[icon] < 0 then
@@ -213,11 +245,15 @@ end
 
 function module:getTargetText()
     local text = ""
-    local m_cat, m_bear, aura, rank, icon, count, debufType, duration, expirationTime
-    local size
+    -- local m_cat, m_bear, aura, rank, icon, count, debufType, duration, expirationTime
+    -- local size
 
     if self.addon.db.class.use_combo and not self.addon.db.class.use_combo_beside_player then
         text = getComboText()
+    end
+
+    if self.addon.db.class.use_thrash and not self.addon.db.class.use_combo_beside_player then
+        text = text .. getThrashCount()
     end
 
     if self.addon.db.class.use_activated_spells then

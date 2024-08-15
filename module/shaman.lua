@@ -6,7 +6,6 @@ local module = _G["BlinkHealthTextModule"]
 
 local GetLocale = GetLocale
 local UnitClass = UnitClass
-local GetSpellTexture = GetSpellTexture
 local select = select
 
 
@@ -109,7 +108,7 @@ end
 
 function module:SPELL_ACTIVATION_OVERLAY_GLOW_SHOW(...)
     local spellID, texture, positions, scale, r, g, b = ...;
-    local icon = GetSpellTexture(spellID)
+    local icon = C_Spell.GetSpellTexture(spellID)
     if icon then
         if not activation_spells[icon] then
             activation_spells[icon] = 0
@@ -120,7 +119,7 @@ end
 
 function module:SPELL_ACTIVATION_OVERLAY_GLOW_HIDE(...)
     local spellID = ...;
-    local icon = GetSpellTexture(spellID)
+    local icon = C_Spell.GetSpellTexture(spellID)
     if icon and activation_spells and activation_spells[icon] then
         activation_spells[icon] = activation_spells[icon] - 1
         if activation_spells[icon] < 0 then
