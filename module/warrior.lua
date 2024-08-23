@@ -22,12 +22,14 @@ local tinsert = table.insert
 
 local L_WARRIOR_CONFIG = "Warrior Setting"
 local L_USE_WARRIOR_ACTIVATED_SPELL = "Displays the spell icons when activating effect."
+local L_USE_WARRIOR_ACTIVATED_SPELL_TOOLTIP = "Displays the spell icons when activating effect."
 --local L_USE_FOCUSED_RAGE = "|TInterface\\Icons\\ability_warrior_focusedrage:20|t집중된 분노 효과의 중첩 갯수(무기,방어 전문화)를 표시합니다."
 
 -- koKR locale
 if GetLocale() == "koKR" then
     L_WARRIOR_CONFIG = "전사 설정"
-    L_USE_WARRIOR_ACTIVATED_SPELL = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
+    L_USE_WARRIOR_ACTIVATED_SPELL = "발동 효과 아이콘 표시"
+    L_USE_WARRIOR_ACTIVATED_SPELL_TOOLTIP = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
 end
 
 local activation_spells = {}
@@ -88,19 +90,12 @@ function module:init()
     --	end
 
     if not config_added then
-        self:AddMiscConfig {
-            type = "description",
-            text = L_WARRIOR_CONFIG,
-            fontobject = "QuestTitleFont",
-            r = 1,
-            g = 0.82,
-            b = 0,
-            justifyH = "LEFT",
-        }
-        self:AddMiscConfig {
-            type = "toggle",
-            text = L_USE_WARRIOR_ACTIVATED_SPELL,
-            tooltip = L_USE_WARRIOR_ACTIVATED_SPELL,
+        self.addon.guiConfig:CreateLabel(L_WARRIOR_CONFIG)
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_WARRIOR_ACTIVATED_SPELL,
+            tooltip = L_USE_WARRIOR_ACTIVATED_SPELL_TOOLTIP,
+            key = "use_activated_spells",
+            defaultValue = Settings.Default.True,
             get = function()
                 return self.addon.db.class.use_activated_spells
             end,
@@ -112,23 +107,8 @@ function module:init()
                     module:DisableActivatedSpell()
                 end
             end,
-        }
-        --		self:AddMiscConfig{
-        --			type = "toggle",
-        --			text = L_USE_FOCUSED_RAGE,
-        --			tooltip = L_USE_FOCUSED_RAGE,
-        --			get = function ()
-        --				return module.addon.db.class.use_bone_shield
-        --			end,
-        --			set = function (value)
-        --				module.addon.db.class.use_focused_rage = value
-        --				if module.addon.db.class.use_focused_rage then
-        --					module:EnableFocusedRage()
-        --				else
-        --					module:DisableFocusedRage()
-        --				end
-        --			end,
-        --		}
+        })
+
         config_added = true
     end
 end

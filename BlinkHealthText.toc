@@ -4,13 +4,14 @@
 ## Notes-koKR: 자신의 체력과 대상의 체력을 보여줍니다.
 ## Notes: Displays player and target's health/power text HUD.
 ## Author: Blink
-## OptionalDeps: Blink
 ## SavedVariablesPerCharacter: BlinkHealthTextDB
 
 embeds.xml
 
 locales\enUS.lua
 locales\koKR.lua
+
+guiConfig.lua
 
 module\module.lua
 module\mage.lua
@@ -25,5 +26,6 @@ module\monk.lua
 module\hunter.lua
 module\warlock.lua
 module\demonhunter.lua
+module\evoker.lua
 
 BlinkHealthText.lua

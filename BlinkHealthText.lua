@@ -17,7 +17,6 @@ addon.unitFrame = {}
 addon.fadingFrame = {}
 addon.flashingFrame = {}
 
-
 -------------------------------------------------------------------------------
 -- locale load
 -------------------------------------------------------------------------------
@@ -53,6 +52,7 @@ local MainFrameOnEvent
 -- local class = select(2, UnitClass("player"))
 
 local module = _G["BlinkHealthTextModule"]
+local guiConfig = _G["BlinkHealthTextConfig"]
 
 local RaidIconList = {
     "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_1:",
@@ -267,6 +267,120 @@ local fonts = {
 	}
 	]]
 }
+
+
+local getArgs, tmp, new, del, gettext, getfunc, gettable, getbool, getvalue, showhide, disable
+do
+    local cache = setmetatable({}, { __mode = 'k' })
+    function new()
+        local t = next(cache)
+        if t then
+            cache[t] = nil
+            return t
+        else
+            return {}
+        end
+    end
+
+    function del(t)
+        for k in pairs(t) do
+            t[k] = nil
+        end
+        cache[t] = true
+        return nil
+    end
+
+    local t = {}
+    function tmp(...)
+        for k in pairs(t) do
+            t[k] = nil
+        end
+        for i = 1, select('#', ...), 2 do
+            local k = select(i, ...)
+            if k then
+                t[k] = select(i + 1, ...)
+            else
+                break
+            end
+        end
+        return t
+    end
+
+    local info = {}
+    function getArgs(...)
+        if type(select(1, ...)) == 'table' then
+            info = select(1, ...)
+        else
+            info = tmp(...)
+        end
+        return info
+    end
+
+    function getbool(value)
+        if type(value) == 'boolean' then
+            return value
+        elseif type(value) == 'function' then
+            return value()
+        end
+    end
+
+    function getvalue(value)
+        if type(value) == 'function' then
+            return value()
+        else
+            return value
+        end
+    end
+
+    function gettext(text)
+        if type(text) == 'string' then
+            return text
+        elseif type(text) == 'function' then
+            return text()
+        end
+    end
+
+    function gettable(t)
+        if type(t) == 'table' then
+            return t
+        elseif type(t) == 'function' then
+            return t()
+        end
+    end
+
+    function getfunc(func)
+        if func and type(func) == 'function' then
+            return func
+        elseif func and type(func) == 'string' then
+            local f = getglobal(func)
+            if f and type(f) == 'function' then
+                return f
+            end
+        end
+    end
+
+    function showhide(frame, showhideValue)
+        if showhideValue then
+            if getbool(showhideValue) then
+                frame:Show()
+            else
+                frame:Hide()
+            end
+        else
+            frame:Show()
+        end
+    end
+
+    function disable(frame, disableValue)
+        if disableValue then
+            if getbool(disableValue) then
+                frame.disable()
+            else
+                frame.enable()
+            end
+        end
+    end
+end
 
 -- if LibStub and LibStub["libs"]["LibSharedMedia-3.0"] then
 --     local SharedMedia = LibStub:GetLibrary("LibSharedMedia-3.0")
@@ -905,25 +1019,9 @@ end
 function MainFrameOnEvent(self, event, ...)
     local arg1, arg2, arg3, arg4, arg5 = ...;
     if (event == "PLAYER_ENTERING_WORLD") then
-        if not BlinkHealthTextDB or not BlinkHealthTextDB.db_ver or BlinkHealthTextDB.db_ver < defaultDB.db_ver then
-            BlinkHealthTextDB = {}
-            tcopy(BlinkHealthTextDB, defaultDB)
-            print(L.DB_MIGRATION)
-        end
-        addon.db = BlinkHealthTextDB
         if addon.db.enable then
             addon:EnableAddon()
         end
-
-        if module then
-            module.addon = addon
-            if module.init and type(module.init) == 'function' then
-                module:init()
-            end
-        end
-
-        -- addon:registGUI()
-
     elseif event == "PLAYER_TARGET_CHANGED" then
         addon:FrameUpdate("target")
     elseif event == "PLAYER_REGEN_DISABLED" then
@@ -986,6 +1084,22 @@ function MainFrameOnEvent(self, event, ...)
     end
 end
 
+function addon:registGUI()
+    self.guiConfig = guiConfig
+    guiConfig:registBlizzGUI(self);
+end
+
 addon.mainFrame = CreateFrame("Frame")
 addon.mainFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 addon.mainFrame:SetScript("OnEvent", MainFrameOnEvent)
+
+EventRegistry:RegisterFrameEventAndCallback("VARIABLES_LOADED", function()
+    if not BlinkHealthTextDB or not BlinkHealthTextDB.db_ver or BlinkHealthTextDB.db_ver < defaultDB.db_ver then
+        BlinkHealthTextDB = {}
+        tcopy(BlinkHealthTextDB, defaultDB)
+        print(L.DB_MIGRATION)
+    end
+    addon.db = BlinkHealthTextDB
+
+    addon:registGUI()
+end)

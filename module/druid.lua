@@ -24,19 +24,25 @@ local activation_spells = {}
 
 local L_DRUID_CONFIG = "Druid Setting"
 local L_USE_COMBO = "Displays the number of combo points."
+local L_USE_COMBO_TOOLTIP = "Displays the number of combo points."
 local L_USE_COMBO_BESIDE_PLAYER = "Displays the number of combo points next to the Player's health text.(default: beside target's health text)"
 local L_USE_COMBO_BESIDE_PLAYER_DESC = "Check to display the number of combo points to the right of Player's health."
-local L_USE_THRASH = "곰의 난타 디버프 개수를 표시합니다."
+local L_USE_THRASH = "곰의 난타 개수 표시"
+local L_USE_THRASH_TOOLTIP = "곰의 난타 디버프 개수를 표시합니다."
 local L_USE_DRUID_ACTIVATED_SPELL = "Displays the spell icons when activating effect."
+local L_USE_DRUID_ACTIVATED_SPELL_TOOLTIP = "Displays the spell icons when activating effect."
 
 -- koKR locale
 if GetLocale() == "koKR" then
     L_DRUID_CONFIG = "드루이드 설정"
-    L_USE_COMBO = "표범의 연계점수를 표시합니다."
-    L_USE_COMBO_BESIDE_PLAYER = "표범의 연계점수를 플레이어 체력 텍스트 옆에 표시합니다."
+    L_USE_COMBO = "표범의 연계점수 표시"
+    L_USE_COMBO_TOOLTIP = "표범의 연계점수를 표시합니다."
+    L_USE_COMBO_BESIDE_PLAYER = "표범의 연계점수를 플레이어 체력 텍스트 옆에 표시"
     L_USE_COMBO_BESIDE_PLAYER_DESC = "체크하면 표범의 연계점수를 플레이어 체력 텍스트 오른쪽에 표시합니다."
-    L_USE_THRASH = "곰의 난타 디버프 개수를 표시합니다."
-    L_USE_DRUID_ACTIVATED_SPELL = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
+    L_USE_THRASH = "곰의 난타 개수 표시"
+    L_USE_THRASH_TOOLTIP = "곰의 난타 디버프 개수를 표시합니다."
+    L_USE_DRUID_ACTIVATED_SPELL = "발동 효과 아이콘 표시"
+    L_USE_DRUID_ACTIVATED_SPELL_TOOLTIP = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
 end
 
 local defaultDB = {
@@ -121,68 +127,12 @@ function module:init()
     end
 
     if not config_added then
-        self:AddMiscConfig {
-            type = "description",
-            text = L_DRUID_CONFIG,
-            fontobject = "QuestTitleFont",
-            r = 1,
-            g = 0.82,
-            b = 0,
-            justifyH = "LEFT",
-        }
-        self:AddMiscConfig {
-            type = "toggle",
-            text = L_USE_COMBO,
-            tooltip = L_USE_COMBO,
-            get = function()
-                if self.addon and self.addon.db then
-                    return self.addon.db.class.use_combo
-                end
-                return
-            end,
-            set = function(value)
-                self.addon.db.class.use_combo = value
-            end,
-            needRefresh = true,
-        }
-        self:AddMiscConfig {
-            type = "toggle",
-            depth = 1,
-            text = L_USE_COMBO_BESIDE_PLAYER,
-            tooltip = L_USE_COMBO_BESIDE_PLAYER_DESC,
-            get = function()
-                if self.addon and self.addon.db then
-                    return self.addon.db.class.use_combo_beside_player
-                end
-                return
-            end,
-            set = function(value)
-                self.addon.db.class.use_combo_beside_player = value
-            end,
-            disable = function()
-                return not self.addon.db.class.use_combo
-            end,
-            needRefresh = true,
-        }
-        self:AddMiscConfig {
-            type = "toggle",
-            text = L_USE_THRASH,
-            tooltip = L_USE_THRASH,
-            get = function()
-                if self.addon and self.addon.db then
-                    return self.addon.db.class.use_thrash
-                end
-                return
-            end,
-            set = function(value)
-                self.addon.db.class.use_thrash = value
-            end,
-            needRefresh = true,
-        }
-        self:AddMiscConfig {
-            type = "toggle",
-            text = L_USE_DRUID_ACTIVATED_SPELL,
-            tooltip = L_USE_DRUID_ACTIVATED_SPELL,
+        self.addon.guiConfig:CreateLabel(L_DRUID_CONFIG)
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_DRUID_ACTIVATED_SPELL,
+            tooltip = L_USE_DRUID_ACTIVATED_SPELL_TOOLTIP,
+            key = "use_activated_spells",
+            defaultValue = Settings.Default.True,
             get = function()
                 return self.addon.db.class.use_activated_spells
             end,
@@ -194,7 +144,53 @@ function module:init()
                     module:DisableActivatedSpell()
                 end
             end,
-        }
+        })
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_COMBO,
+            tooltip = L_USE_COMBO_TOOLTIP,
+            key = "use_combo",
+            defaultValue = Settings.Default.True,
+            get = function()
+                if self.addon and self.addon.db then
+                    return self.addon.db.class.use_combo
+                end
+                return
+            end,
+            set = function(value)
+                self.addon.db.class.use_combo = value
+            end,
+        })
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_COMBO_BESIDE_PLAYER,
+            tooltip = L_USE_COMBO_BESIDE_PLAYER_DESC,
+            key = "use_combo_beside_player",
+            defaultValue = Settings.Default.True,
+            get = function()
+                if self.addon and self.addon.db then
+                    return self.addon.db.class.use_combo_beside_player
+                end
+                return
+            end,
+            set = function(value)
+                self.addon.db.class.use_combo_beside_player = value
+            end,
+        })
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_THRASH,
+            tooltip = L_USE_THRASH,
+            key = "use_thrash",
+            defaultValue = Settings.Default.True,
+            get = function()
+                if self.addon and self.addon.db then
+                    return self.addon.db.class.use_thrash
+                end
+                return
+            end,
+            set = function(value)
+                self.addon.db.class.use_thrash = value
+            end,
+        })
+
         config_added = true
     end
 end

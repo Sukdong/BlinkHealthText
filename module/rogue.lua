@@ -22,6 +22,7 @@ local FinishSkill = 35 -- 주력 마무리스킬 기력
 
 local L_ROGUE_CONFIG = "Rogue Setting"
 local L_USE_ROGUE_ACTIVATED_SPELL = "Displays the spell icons when activating effect."
+local L_USE_ROGUE_ACTIVATED_SPELL_TOOLTIP = "Displays the spell icons when activating effect."
 local L_SWITCH_COMBO_POSITION = "Location of Combo points"
 local L_SWITCH_COMBO_POSITION_TT = "Sets the location of the combo point next to the Player or Target."
 local L_SWITCH_COMBO_POSITION_PLAYER = "Player"
@@ -30,7 +31,8 @@ local L_SWITCH_COMBO_POSITION_TARGET = "Target"
 -- koKR locale
 if GetLocale() == "koKR" then
     L_ROGUE_CONFIG = "도적 설정"
-    L_USE_ROGUE_ACTIVATED_SPELL = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
+    L_USE_ROGUE_ACTIVATED_SPELL = "발동 효과 아이콘 표시"
+    L_USE_ROGUE_ACTIVATED_SPELL_TOOLTIP = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
     L_SWITCH_COMBO_POSITION = "연계수치 위치 설정"
     L_SWITCH_COMBO_POSITION_TT = "연계수치의 위치를 플레이어 또는 대상 옆으로 설정합니다."
     L_SWITCH_COMBO_POSITION_PLAYER = "플레이어옆"
@@ -82,20 +84,12 @@ function module:init()
     self:update()
 
     if loaded == false then
-        self:AddMiscConfig {
-            type = "description",
-            text = L_ROGUE_CONFIG,
-            fontobject = "QuestTitleFont",
-            r = 1,
-            g = 0.82,
-            b = 0,
-            justifyH = "LEFT",
-        }
-
-        self:AddMiscConfig {
-            type = "toggle",
-            text = L_USE_ROGUE_ACTIVATED_SPELL,
-            tooltip = L_USE_ROGUE_ACTIVATED_SPELL,
+        self.addon.guiConfig:CreateLabel(L_ROGUE_CONFIG)
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_ROGUE_ACTIVATED_SPELL,
+            tooltip = L_USE_ROGUE_ACTIVATED_SPELL_TOOLTIP,
+            key = "use_activated_spells",
+            defaultValue = Settings.Default.True,
             get = function()
                 return self.addon.db.class.use_activated_spells
             end,
@@ -107,12 +101,11 @@ function module:init()
                     module:DisableActivatedSpell()
                 end
             end,
-        }
-
-        self:AddMiscConfig {
-            type = "radio",
-            text = L_SWITCH_COMBO_POSITION,
+        })
+        self.addon.guiConfig:CreateDropdown({
+            label = L_SWITCH_COMBO_POSITION,
             tooltip = L_SWITCH_COMBO_POSITION_TT,
+            key = "rg_combo_position",
             values = {
                 {
                     text = L_SWITCH_COMBO_POSITION_PLAYER,
@@ -123,15 +116,15 @@ function module:init()
                     value = "target",
                 },
             },
+            varType = Settings.VarType.String,
+            defaultValue = "target",
             get = function()
                 return self.addon.db.class.rg_combo_position or "target"
             end,
             set = function(value)
                 self.addon.db.class.rg_combo_position = value
             end,
-            col = 2,
-            --disable = not module.addon.db.useModule,
-        }
+        })
     end
     loaded = true
 end

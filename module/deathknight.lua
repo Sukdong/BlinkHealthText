@@ -31,10 +31,14 @@ local L_SPELL_BONE_SHIELD = "Bone Shield"
 -- koKR locale
 if GetLocale() == "koKR" then
     L_DK_CONFIG = "죽음의 기사 설정"
-    L_USE_RUNE = "현재 남아있는 룬을 표시합니다."
-    L_USE_DK_ACTIVATED_SPELL = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
-    L_USE_DISEASE = "|TInterface\\Icons\\spell_yorsahj_bloodboil_purpleoil:20|t고름 상처 효과의 갯수를 표시합니다."
-    L_USE_BONE_SHIELD = "|TInterface\\Icons\\ability_deathknight_boneshield:20|t뼈의 보호막 효과의 갯수를 표시합니다."
+    L_USE_RUNE = "룬 개수 표시"
+    L_USE_RUNE_TOOLTIP = "현재 남아있는 룬을 표시합니다."
+    L_USE_DK_ACTIVATED_SPELL = "발동 효과 아이콘 표시"
+    L_USE_DK_ACTIVATED_SPELL_TOOLTIP = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
+    L_USE_DISEASE = "|TInterface\\Icons\\spell_yorsahj_bloodboil_purpleoil:20|t 고름 상처 개수 표시"
+    L_USE_DISEASE_TOOLTIP = "고름 상처 효과의 개수를 표시합니다."
+    L_USE_BONE_SHIELD = "|TInterface\\Icons\\ability_deathknight_boneshield:20|t 뼈의 보호막 개수 표시"
+    L_USE_BONE_SHIELD_TOOLTIP = "뼈의 보호막 효과의 개수를 표시합니다."
     L_SPELL_FESTERING_WOUND = "고름 상처"
     L_SPELL_BONE_SHIELD = "뼈의 보호막"
 end
@@ -139,19 +143,12 @@ function module:init()
     end
 
     if loaded == false then
-        self:AddMiscConfig {
-            type = "description",
-            text = L_DK_CONFIG,
-            fontobject = "QuestTitleFont",
-            r = 1,
-            g = 0.82,
-            b = 0,
-            justifyH = "LEFT",
-        }
-        self:AddMiscConfig {
-            type = "toggle",
-            text = L_USE_RUNE,
-            tooltip = L_USE_RUNE,
+        self.addon.guiConfig:CreateLabel(L_DK_CONFIG)
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_RUNE,
+            tooltip = L_USE_RUNE_TOOLTIP,
+            key = "use_rune",
+            defaultValue = Settings.Default.True,
             get = function()
                 return module.addon.db.class.use_rune
             end,
@@ -163,11 +160,12 @@ function module:init()
                     module:DisableRune()
                 end
             end,
-        }
-        self:AddMiscConfig {
-            type = "toggle",
-            text = L_USE_DK_ACTIVATED_SPELL,
-            tooltip = L_USE_DK_ACTIVATED_SPELL,
+        })
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_DK_ACTIVATED_SPELL,
+            tooltip = L_USE_DK_ACTIVATED_SPELL_TOOLTIP,
+            key = "use_activated_spells",
+            defaultValue = Settings.Default.True,
             get = function()
                 return self.addon.db.class.use_activated_spells
             end,
@@ -179,11 +177,12 @@ function module:init()
                     module:DisableActivatedSpell()
                 end
             end,
-        }
-        self:AddMiscConfig {
-            type = "toggle",
-            text = L_USE_BONE_SHIELD,
-            tooltip = L_USE_BONE_SHIELD,
+        })
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_BONE_SHIELD,
+            tooltip = L_USE_BONE_SHIELD_TOOLTIP,
+            key = "use_bone_shield",
+            defaultValue = Settings.Default.True,
             get = function()
                 return module.addon.db.class.use_bone_shield
             end,
@@ -195,11 +194,12 @@ function module:init()
                     module:DisableBoneShield()
                 end
             end,
-        }
-        self:AddMiscConfig {
-            type = "toggle",
-            text = L_USE_DISEASE,
-            tooltip = L_USE_DISEASE,
+        })
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_DISEASE,
+            tooltip = L_USE_DISEASE_TOOLTIP,
+            key = "use_disease",
+            defaultValue = Settings.Default.True,
             get = function()
                 return module.addon.db.class.use_disease
             end,
@@ -211,18 +211,7 @@ function module:init()
                     module:DisableDisease()
                 end
             end,
-        }
-        --		self:AddMiscConfig{
-        --			type = "toggle",
-        --			text = L_USE_SCOURGE_OF_WORLDS,
-        --			tooltip = L_USE_SCOURGE_OF_WORLDS,
-        --			get = function ()
-        --				return module.addon.db.class.use_scourge_of_worlds
-        --			end,
-        --			set = function (value)
-        --				module.addon.db.class.use_scourge_of_worlds = value
-        --			end,
-        --		}
+        })
 
         loaded = true
     end

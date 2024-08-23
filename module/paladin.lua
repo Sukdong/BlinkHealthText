@@ -23,17 +23,21 @@ local enabled_the_art_of_war = false
 
 local L_PALADIN_CONFIG = "Paladin Setting"
 local L_USE_COMBO = "Displays the number of Holy Powers."
+local L_USE_COMBO_TOOLTIP = "Displays the number of Holy Powers."
 local L_USE_3HOLY_POWER_SKILL = "|TInterface\\Icons\\Spell_Paladin_Templarsverdict:20|t Displays Templar's Verdict skills when there are more than 3 Holy Powers.(Retribution only)"
-local L_USE_3HOLY_POWER_SKILL_DESC = "|TInterface\\Icons\\Spell_Paladin_Templarsverdict:20|t Displays Templar's Verdict skills when there are more than 3 Holy Powers."
+local L_USE_3HOLY_POWER_SKILL_DESC = "Displays Templar's Verdict skills when there are more than 3 Holy Powers."
 local L_USE_PALADIN_ACTIVATED_SPELL = "Displays the spell icons when activating effect."
+local L_USE_PALADIN_ACTIVATED_SPELL_TOOLTIP = "Displays the spell icons when activating effect."
 
 -- koKR locale
 if GetLocale() == "koKR" then
     L_PALADIN_CONFIG = "성기사 설정"
-    L_USE_COMBO = "성기사 신성한 힘의 갯수를 표시합니다."
-    L_USE_3HOLY_POWER_SKILL = "|TInterface\\Icons\\Spell_Paladin_Templarsverdict:20|t 신성한 힘이 3개 이상일때 기사단의 선고 아이콘을 표시해줍니다.(징벌 전용)"
-    L_USE_3HOLY_POWER_SKILL_DESC = "|TInterface\\Icons\\Spell_Paladin_Templarsverdict:20|t 신성한 힘이 3개 이상일때 기사단의 선고 아이콘을 표시해줍니다.(징벌 전용)"
-    L_USE_PALADIN_ACTIVATED_SPELL = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
+    L_USE_COMBO = "신성한 힘의 개수 표시"
+    L_USE_COMBO_TOOLTIP = "성기사 신성한 힘의 갯수를 표시합니다."
+    L_USE_3HOLY_POWER_SKILL = "|TInterface\\Icons\\Spell_Paladin_Templarsverdict:20|t 기사단의 선고 아이콘 표시"
+    L_USE_3HOLY_POWER_SKILL_DESC = "신성한 힘이 3개 이상일때 기사단의 선고 아이콘을 표시해줍니다.(징벌 전용)"
+    L_USE_PALADIN_ACTIVATED_SPELL = "발동 효과 아이콘 표시"
+    L_USE_PALADIN_ACTIVATED_SPELL_TOOLTIP = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
 end
 
 
@@ -83,34 +87,12 @@ function module:init()
     end
 
     if not config_added then
-        self:AddMiscConfig {
-            type = "description",
-            text = L_PALADIN_CONFIG,
-            fontobject = "QuestTitleFont",
-            r = 1,
-            g = 0.82,
-            b = 0,
-            justifyH = "LEFT",
-        }
-        self:AddMiscConfig {
-            type = "toggle",
-            text = L_USE_COMBO,
-            tooltip = L_USE_COMBO,
-            get = function()
-                if self.addon and self.addon.db then
-                    return self.addon.db.class.use_combo
-                end
-                return
-            end,
-            set = function(value)
-                self.addon.db.class.use_combo = value
-            end,
-            needRefresh = true,
-        }
-        self:AddMiscConfig {
-            type = "toggle",
-            text = L_USE_PALADIN_ACTIVATED_SPELL,
-            tooltip = L_USE_PALADIN_ACTIVATED_SPELL,
+        self.addon.guiConfig:CreateLabel(L_PALADIN_CONFIG)
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_PALADIN_ACTIVATED_SPELL,
+            tooltip = L_USE_PALADIN_ACTIVATED_SPELL_TOOLTIP,
+            key = "use_activated_spells",
+            defaultValue = Settings.Default.True,
             get = function()
                 return self.addon.db.class.use_activated_spells
             end,
@@ -122,11 +104,27 @@ function module:init()
                     module:DisableActivatedSpell()
                 end
             end,
-        }
-        self:AddMiscConfig {
-            type = "toggle",
-            text = L_USE_3HOLY_POWER_SKILL,
+        })
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_COMBO,
+            tooltip = L_USE_COMBO_TOOLTIP,
+            key = "use_combo",
+            defaultValue = Settings.Default.True,
+            get = function()
+                if self.addon and self.addon.db then
+                    return self.addon.db.class.use_combo
+                end
+                return
+            end,
+            set = function(value)
+                self.addon.db.class.use_combo = value
+            end,
+        })
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_3HOLY_POWER_SKILL,
             tooltip = L_USE_3HOLY_POWER_SKILL_DESC,
+            key = "use_3holy_power_skill",
+            defaultValue = Settings.Default.True,
             get = function()
                 if self.addon and self.addon.db then
                     return self.addon.db.class.use_3holy_power_skill
@@ -136,8 +134,7 @@ function module:init()
             set = function(value)
                 self.addon.db.class.use_3holy_power_skill = value
             end,
-            needRefresh = true,
-        }
+        })
 
         config_added = true
     end

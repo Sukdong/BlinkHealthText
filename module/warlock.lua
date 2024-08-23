@@ -22,13 +22,17 @@ if select(2, UnitClass("player")) ~= "WARLOCK" or not module then return end
 local loaded = false
 local L_WARLOCK_CONFIG = "Warlock Setting"
 local L_USE_POWER = "Displays number of Soul Shards."
+local L_USE_POWER_TOOLTIP = "Displays number of Soul Shards."
 local L_USE_ACTIVATED_SPELL = "Displays the spell icons when activating effect."
+local L_USE_ACTIVATED_SPELL_TOOLTIP = "Displays the spell icons when activating effect."
 
 -- koKR locale
 if GetLocale() == "koKR" then
-    L_USE_POWER = "영혼의 조각 갯수 표시하기"
+    L_USE_POWER = "영혼의 조각 개수 표시"
+    L_USE_POWER_TOOLTIP = "영혼의 조각 개수 표시하기"
     L_WARLOCK_CONFIG = "흑마법사 설정"
-    L_USE_ACTIVATED_SPELL = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
+    L_USE_ACTIVATED_SPELL = "발동 효과 아이콘 표시"
+    L_USE_ACTIVATED_SPELL_TOOLTIP = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
 end
 
 local text
@@ -99,19 +103,12 @@ function module:init()
     self:update()
 
     if loaded == false then
-        self:AddMiscConfig {
-            type = "description",
-            text = L_WARLOCK_CONFIG,
-            fontobject = "QuestTitleFont",
-            r = 1,
-            g = 0.82,
-            b = 0,
-            justifyH = "LEFT",
-        }
-        self:AddMiscConfig {
-            type = "toggle",
-            text = L_USE_ACTIVATED_SPELL,
-            tooltip = L_USE_ACTIVATED_SPELL,
+        self.addon.guiConfig:CreateLabel(L_WARLOCK_CONFIG)
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_ACTIVATED_SPELL,
+            tooltip = L_USE_ACTIVATED_SPELL_TOOLTIP,
+            key = "use_activated_spells",
+            defaultValue = Settings.Default.True,
             get = function()
                 return self.addon.db.class.use_activated_spells
             end,
@@ -123,11 +120,12 @@ function module:init()
                     module:DisableActivatedSpell()
                 end
             end,
-        }
-        self:AddMiscConfig {
-            type = "toggle",
-            text = L_USE_POWER,
-            tooltip = L_USE_POWER,
+        })
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_POWER,
+            tooltip = L_USE_POWER_TOOLTIP,
+            key = "use_power",
+            defaultValue = Settings.Default.True,
             get = function()
                 return self.addon.db.class.use_power
             end,
@@ -139,9 +137,7 @@ function module:init()
                     module:DisablePower()
                 end
             end,
-            disable = not module.addon.db.useModule,
-        }
-
+        })
     end
     loaded = true
 end

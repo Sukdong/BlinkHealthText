@@ -26,7 +26,9 @@ local config_added = false
 local L_ICICLE = "Icicle"
 local L_MAGE_CONFIG = "Mage Setting"
 local L_USE_MAGE_ACTIVATED_SPELL = "Displays the spell icons when activating effect."
+local L_USE_MAGE_ACTIVATED_SPELL_TOOLTIP = "Displays the spell icons when activating effect."
 local L_USE_MAGE_ARCANE_COUNT = "Displays the number of Arcane Charges of Arcane specialization and the number of Icicles of Frost specialization."
+local L_USE_MAGE_ARCANE_COUNT_TOOLTIP = "Displays the number of Arcane Charges of Arcane specialization and the number of Icicles of Frost specialization."
 
 -- koKR locale
 if GetLocale() == "koKR" then
@@ -37,8 +39,10 @@ if GetLocale() == "koKR" then
     --L_FROSTJAW = "서리투성이 턱"
     L_ICICLE = "고드름"
     L_MAGE_CONFIG = "마법사 설정"
-    L_USE_MAGE_ACTIVATED_SPELL = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
-    L_USE_MAGE_ARCANE_COUNT = "비전 전문화의 비전 충전물의 갯수, 냉기 전문화의 고드름 갯수를 표시합니다."
+    L_USE_MAGE_ACTIVATED_SPELL = "발동 효과 아이콘 표시"
+    L_USE_MAGE_ACTIVATED_SPELL_TOOLTIP = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
+    L_USE_MAGE_ARCANE_COUNT = "비전 충전물의 갯수, 냉기 고드름 표시"
+    L_USE_MAGE_ARCANE_COUNT_TOOLTIP = "비전 전문화의 비전 충전물의 갯수, 냉기 전문화의 고드름 갯수를 표시합니다."
 end
 
 local activation_spells = {}
@@ -81,19 +85,12 @@ function module:init()
     end
 
     if not config_added then
-        self:AddMiscConfig {
-            type = "description",
-            text = L_MAGE_CONFIG,
-            fontobject = "QuestTitleFont",
-            r = 1,
-            g = 0.82,
-            b = 0,
-            justifyH = "LEFT",
-        }
-        self:AddMiscConfig {
-            type = "toggle",
-            text = L_USE_MAGE_ACTIVATED_SPELL,
-            tooltip = L_USE_MAGE_ACTIVATED_SPELL,
+        self.addon.guiConfig:CreateLabel(L_MAGE_CONFIG)
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_MAGE_ACTIVATED_SPELL,
+            tooltip = L_USE_MAGE_ACTIVATED_SPELL_TOOLTIP,
+            key = "use_mage_activated_spells",
+            defaultValue = Settings.Default.True,
             get = function()
                 return self.addon.db.class.use_activated_spells
             end,
@@ -104,27 +101,21 @@ function module:init()
                 else
                     module:DisableActivatedSpell()
                 end
-            end,
-        }
-
-        self:AddMiscConfig {
-            type = "toggle",
-            text = L_USE_MAGE_ARCANE_COUNT,
-            tooltip = L_USE_MAGE_ARCANE_COUNT,
+            end
+        })
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_MAGE_ARCANE_COUNT,
+            tooltip = L_USE_MAGE_ARCANE_COUNT_TOOLTIP,
+            key = "show_arcane_count",
+            defaultValue = Settings.Default.True,
             get = function()
                 return self.addon.db.class.show_arcane_count
             end,
             set = function(value)
                 self.addon.db.class.show_arcane_count = value
             end,
-        }
-        --		self:AddMiscConfig{
-        --			type = "description",
-        --			text = "전문화별 발동 효과 발동시 아이콘을 표시합니다.",
-        --			fontobject = "ChatFontNormal",
-        --			justifyH = "LEFT",
-        --			justifyV = "TOP",
-        --		}
+        })
+
         config_added = true
     end
 end

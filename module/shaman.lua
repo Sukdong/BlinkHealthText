@@ -17,11 +17,13 @@ if select(2, UnitClass("player")) ~= "SHAMAN" or not module then return end
 
 local L_SHAMAN_CONFIG = "Shaman Setting"
 local L_USE_SHAMAN_ACTIVATED_SPELL = "Displays the spell icons when activating effect."
+local L_USE_SHAMAN_ACTIVATED_SPELL_TOOLTIP = "Displays the spell icons when activating effect."
 
 -- koKR locale
 if GetLocale() == "koKR" then
     L_SHAMAN_CONFIG = "주술사 설정"
-    L_USE_SHAMAN_ACTIVATED_SPELL = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
+    L_USE_SHAMAN_ACTIVATED_SPELL = "발동 효과 아이콘 표시"
+    L_USE_SHAMAN_ACTIVATED_SPELL_TOOLTIP = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
 end
 
 
@@ -65,19 +67,12 @@ function module:init()
     end
 
     if not config_added then
-        self:AddMiscConfig {
-            type = "description",
-            text = L_SHAMAN_CONFIG,
-            fontobject = "QuestTitleFont",
-            r = 1,
-            g = 0.82,
-            b = 0,
-            justifyH = "LEFT",
-        }
-        self:AddMiscConfig {
-            type = "toggle",
-            text = L_USE_SHAMAN_ACTIVATED_SPELL,
-            tooltip = L_USE_SHAMAN_ACTIVATED_SPELL,
+        self.addon.guiConfig:CreateLabel(L_SHAMAN_CONFIG)
+        self.addon.guiConfig:CreateCheckBox({
+            label = L_USE_SHAMAN_ACTIVATED_SPELL,
+            tooltip = L_USE_SHAMAN_ACTIVATED_SPELL_TOOLTIP,
+            key = "use_activated_spells",
+            defaultValue = Settings.Default.True,
             get = function()
                 return self.addon.db.class.use_activated_spells
             end,
@@ -89,7 +84,8 @@ function module:init()
                     module:DisableActivatedSpell()
                 end
             end,
-        }
+        })
+
         config_added = true
     end
 end
