@@ -28,10 +28,10 @@ local L = _G["BlinkHealthTextLocale"]
 -------------------------------------------------------------------------------
 
 local CreateFrame, AbbreviateLargeNumbers = CreateFrame, AbbreviateLargeNumbers
-local UnitIsVisible, UnitHealth, UnitHealthMax = UnitIsVisible, UnitHealth, UnitHealthMax
+local UnitIsVisible, UnitHealth, UnitHealthPercent = UnitIsVisible, UnitHealth, UnitHealthPercent
 local UnitGetTotalAbsorbs, UnitPowerType, UnitHasVehicleUI = UnitGetTotalAbsorbs, UnitPowerType, UnitHasVehicleUI
-local UnitIsDead, UnitIsGhost, UnitExists = UnitIsDead, UnitIsGhost, UnitExists
-local UnitIsConnected, UnitPower, UnitPowerMax = UnitIsConnected, UnitPower, UnitPowerMax
+local UnitIsDeadOrGhost, UnitIsGhost, UnitExists = UnitIsDeadOrGhost, UnitIsGhost, UnitExists
+local UnitIsConnected, UnitPower, UnitPowerPercent = UnitIsConnected, UnitPower, UnitPowerPercent
 local GetRaidTargetIndex = GetRaidTargetIndex
 local UIFrameFade, UIFrameFlash, UIFrameFadeRemoveFrame = UIFrameFade, UIFrameFlash, UIFrameFadeRemoveFrame
 local UIParent = UIParent
@@ -53,6 +53,8 @@ local MainFrameOnEvent
 
 local module = _G["BlinkHealthTextModule"]
 local guiConfig = _G["BlinkHealthTextConfig"]
+
+local curve = CurveConstants.ScaleTo100
 
 local RaidIconList = {
     "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_1:",
@@ -440,69 +442,27 @@ function tcopy(to, from) -- "to" must be a table (possibly empty)
     end
 end
 
-local function FrameOnUpdate(unitFrame, elapsed)
-    unitFrame.timer = unitFrame.timer + elapsed
-    if unitFrame.timer > UPDATE_INTERVAL then
-        unitFrame.timer = 0
-        if unitFrame.unit and UnitIsConnected(unitFrame.unit) then
-            addon:DisplayHealthText(unitFrame.unit)
-            addon:DisplayPowerText(unitFrame.unit)
-            if addon.db.useModule then
-                addon:DisplayText(unitFrame.unit)
+local function FrameOnUpdate(unitFrame)
+    if unitFrame.unit and UnitIsConnected(unitFrame.unit) then
+        addon:DisplayHealthText(unitFrame.unit)
+        addon:DisplayPowerText(unitFrame.unit)
+        if addon.db.useModule then
+            addon:DisplayText(unitFrame.unit)
 
-                if module and module.ExtraUpdators then
-                    module:ExtraUpdators(unitFrame.unit)
-                end
+            if module and module.ExtraUpdators then
+                module:ExtraUpdators(unitFrame.unit)
             end
-
-            --			local currHealth = UnitHealth(unitFrame.unit)
-            --			if ( currHealth ~= unitFrame.healthValue ) then
-            --				addon:DisplayHealthText(unitFrame.unit)
-            --				unitFrame.healthValue = currHealth;
-            --			end
-            --
-            --			local currPower = UnitPower(unitFrame.unit)
-            --			if ( currPower ~= unitFrame.powerValue ) then
-            --				addon:DisplayPowerText(unitFrame.unit)
-            --				unitFrame.powerValue = currPower;
-            --			end
-            --			addon:DisplayText(unitFrame.unit)
         end
     end
 end
 
 function addon:RegisterEvents(frame)
-    --	if self.db.predictedText then
-    --		frame:SetScript("OnUpdate", FrameOnUpdate)
-    --	else
-    --		-- health Event
-    --		frame:RegisterEvent("UNIT_HEALTH")
-    --		-- power Events
-    --		frame:RegisterEvent("UNIT_MANA")
-    --		frame:RegisterEvent("UNIT_RAGE")
-    --		frame:RegisterEvent("UNIT_FOCUS")
-    --		frame:RegisterEvent("UNIT_ENERGY")
-    --		frame:RegisterEvent("UNIT_HAPPINESS")
-    --		frame:RegisterEvent("UNIT_RUNIC_POWER")
-    --	end
-    --	-- health Event
-    --	frame:RegisterEvent("UNIT_MAXHEALTH")
-    --	-- power Events
-    --	frame:RegisterEvent("UNIT_MAXMANA")
-    --	frame:RegisterEvent("UNIT_MAXRAGE")
-    --	frame:RegisterEvent("UNIT_MAXFOCUS")
-    --	frame:RegisterEvent("UNIT_MAXENERGY")
-    --	frame:RegisterEvent("UNIT_MAXHAPPINESS")
-    --	frame:RegisterEvent("UNIT_MAXRUNIC_POWER")
-    --	frame:RegisterEvent("UNIT_DISPLAYPOWER")
-    --	frame:SetScript("OnEvent", FrameOnEvent)
-
-    frame:SetScript("OnUpdate", FrameOnUpdate)
+    C_Timer.NewTicker(UPDATE_INTERVAL, function()
+        FrameOnUpdate(frame)
+    end);
 end
 
 function addon:UnregisterEvents(frame)
-    --	frame:UnregisterAllEvents()
-    --	frame:SetScript("OnEvent", nil)
     frame:SetScript("OnUpdate", nil)
 end
 
@@ -512,8 +472,6 @@ function addon:CreateFrames()
         self.playerFrame = CreateFrame("Frame", "BHT_playerFrame", UIParent)
         self.playerFrame:ClearAllPoints()
         self.playerFrame:SetPoint("CENTER", -self.db.posX, self.db.posY)
-        -- self.playerFrame:SetFrameStrata("BACKGROUND")
-        -- self.playerFrame:SetFrameLevel(0)
 
         self.playerFrame.health = self.playerFrame:CreateFontString(nil, "OVERLAY")
         self.playerFrame.health:SetFont(self.db.font, self.db.fontSizeHealth, self.db.fontOutline)
@@ -533,6 +491,13 @@ function addon:CreateFrames()
         self.playerFrame.text:SetAlpha(self.db.unit.player.alpha)
         self.playerFrame.text:SetJustifyH("LEFT")
 
+        self.playerFrame.texture = self.playerFrame:CreateTexture(nil, "OVERLAY")
+        self.playerFrame.texture:SetPoint("LEFT", self.playerFrame.text, "RIGHT", 5, 0)
+        self.playerFrame.texture:SetSize(self.db.fontSizeHealth, self.db.fontSizeHealth)
+        self.playerFrame.texture:SetAlpha(self.db.unit.player.alpha)
+        self.playerFrame.texture:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
+        self.playerFrame.texture:Hide()
+
         self.playerFrame:SetHeight(self.playerFrame.health:GetHeight() + self.playerFrame.power:GetHeight())
         self.playerFrame:SetWidth(150)
 
@@ -549,8 +514,6 @@ function addon:CreateFrames()
         self.targetFrame = CreateFrame("Frame", "BHT_targetFrame", UIParent)
         self.targetFrame:ClearAllPoints()
         self.targetFrame:SetPoint("CENTER", self.db.posX, self.db.posY)
-        -- self.targetFrame:SetFrameStrata("BACKGROUND")
-        -- self.targetFrame:SetFrameLevel(0)
 
         self.targetFrame.health = self.targetFrame:CreateFontString(nil, "OVERLAY")
         self.targetFrame.health:SetFont(self.db.font, self.db.fontSizeHealth, self.db.fontOutline)
@@ -570,6 +533,13 @@ function addon:CreateFrames()
         self.targetFrame.text:SetAlpha(self.db.unit.target.alpha)
         self.targetFrame.text:SetJustifyH("LEFT")
 
+        self.targetFrame.texture = self.targetFrame:CreateTexture(nil, "OVERLAY")
+        self.targetFrame.texture:SetPoint("LEFT", self.targetFrame.text, "RIGHT", 5, 0)
+        self.targetFrame.texture:SetSize(self.db.fontSizeHealth, self.db.fontSizeHealth)
+        self.targetFrame.texture:SetAlpha(self.db.unit.target.alpha)
+        self.targetFrame.texture:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
+        self.targetFrame.texture:Hide()
+
         self.targetFrame:SetHeight(self.targetFrame.health:GetHeight() + self.targetFrame.power:GetHeight())
         self.targetFrame:SetWidth(150)
 
@@ -586,8 +556,6 @@ function addon:CreateFrames()
         self.petFrame = CreateFrame("Frame", "BHT_petFrame", UIParent)
         self.petFrame:ClearAllPoints()
         self.petFrame:SetPoint("TOPRIGHT", self.playerFrame.health, "TOPLEFT", 0, 0)
-        -- self.petFrame:SetFrameStrata("BACKGROUND")
-        -- self.petFrame:SetFrameLevel(0)
 
         self.petFrame.health = self.petFrame:CreateFontString(nil, "OVERLAY")
         self.petFrame.health:SetFont(self.db.font, self.db.fontSizeHealthForPet, self.db.fontOutline)
@@ -631,14 +599,12 @@ function addon:getHealthColor(unit)
 
     if self.db.useModule then
         local exist
-        if unit == "target" and module and module.getTargetHealthColor and type(module.getTargetHealthColor) ==
-            'function' then
+        if unit == "target" and module and module.getTargetHealthColor and type(module.getTargetHealthColor) == 'function' then
             exist, r, g, b = module:getTargetHealthColor()
             if exist then
                 return r, g, b
             end
-        elseif unit == "player" and module and module.getPlayerHealthColor and
-            type(module.getPlayerHealthColor) == 'function' then
+        elseif unit == "player" and module and module.getPlayerHealthColor and type(module.getPlayerHealthColor) == 'function' then
             exist, r, g, b = module:getPlayerHealthColor()
             if exist then
                 return r, g, b
@@ -646,7 +612,7 @@ function addon:getHealthColor(unit)
         end
     end
 
-    local perH = UnitHealth(unit) / UnitHealthMax(unit) * 100
+    local perH = 100 -- UnitHealthPercent(unit, false, curve)
     if (perH < 20) then -- Execute, Hammer of Wrath
         r, g, b = 1.0, 0.0, 0.2
     elseif (perH < 80 and perH >= 20) then
@@ -654,11 +620,11 @@ function addon:getHealthColor(unit)
     else
         r, g, b = 0.0, 1.0, 0.2
     end
-    -- 보호막이 있으면 색상변경
-    local totalAbsorb = UnitGetTotalAbsorbs(unit) or 0
-    if totalAbsorb > 0 then
-        r, g, b = 0.4, 0.4, 0.97
-    end
+    -- -- 보호막이 있으면 색상변경
+    -- local totalAbsorb = UnitGetTotalAbsorbs(unit)
+    -- if totalAbsorb then
+    --     r, g, b = 0.4, 0.4, 0.97
+    -- end
     return r, g, b
 end
 
@@ -710,9 +676,16 @@ function addon:DisplayText(unit)
         if func and type(func) == 'function' then
             if unit == "target" then
                 if not UnitHasVehicleUI("player") then
-                    text = self:DisplayRaidIcon("target") .. (func(module) or "")
-                else
-                    text = self:DisplayRaidIcon("target")
+                    text = func(module) or ""
+                end
+                if frame.texture then
+                    local rii = self:DisplayRaidIcon("target")
+                    if rii then
+                        frame.texture:SetSpriteSheetCell(rii, RAID_TARGET_TEXTURE_ROWS, RAID_TARGET_TEXTURE_COLUMNS);
+                        frame.texture:Show()
+                    else
+                        frame.texture:Hide()
+                    end
                 end
             else
                 text = func(module)
@@ -742,7 +715,7 @@ function addon:DisplayHealthText(unit)
         return
     end
 
-    if UnitIsDead(unit) or UnitIsGhost(unit) then
+    if UnitIsDeadOrGhost(unit) then
         frame.health:SetTextColor(0.6, 0.6, 0.6)
         if UnitIsGhost(unit) then
             frame.health:SetText("Ghost")
@@ -761,10 +734,10 @@ function addon:DisplayHealthText(unit)
         return
     end
 
-    local ch, mh, perH, healthText = UnitHealth(unit), UnitHealthMax(unit), 0, ""
+    local ch, healthText = UnitHealth(unit), ""
     local totalAbsorb = UnitGetTotalAbsorbs(unit) or 0
+    local perH = UnitHealthPercent(unit, false, curve)
 
-    perH = (ch + totalAbsorb) / mh * 100
     if unit == "player" and self.db.unit.player.realValue then
         healthText = AbbreviateLargeNumbers(ch)
     elseif unit == "pet" and self.db.unit.pet.realValue then
@@ -797,22 +770,15 @@ function addon:DisplayPowerText(unit)
     if (not frame:IsShown()) then
         return
     end
-    local currValue, maxMana, perM, powerText = UnitPower(unit), UnitPowerMax(unit), 0, ""
-    if (currValue <= 0 or maxMana <= 0) then
-        powerText = ""
-    else
-        perM = currValue / maxMana * 100
-        if unit == "player" and self.db.unit.player.realPowerValue then
-            powerText = tostring(currValue)
-        elseif unit == "pet" and self.db.unit.pet.realPowerValue then
-            powerText = tostring(currValue)
-        elseif unit == "vehicle" and self.db.unit.pet.realPowerValue then -- @.@
-            powerText = tostring(currValue)
-        elseif unit == "target" and self.db.unit.target.realPowerValue then
-            powerText = tostring(currValue)
-        else
-            powerText = string.format("%d", perM)
-        end
+
+    local powerText = UnitPower(unit)
+    local perM = UnitPowerPercent(unit, nil, false, curve)
+
+    if (unit == "player" and not self.db.unit.player.realPowerValue)
+        or (unit == "pet" and not self.db.unit.pet.realPowerValue)
+        or ( unit == "vehicle" and not self.db.unit.pet.realPowerValue)
+        or (unit == "target" and not self.db.unit.target.realPowerValue) then
+        powerText = string.format("%d", perM)
     end
 
     local r, g, b = self:getPowerColor(unit)
@@ -822,14 +788,9 @@ end
 
 function addon:DisplayRaidIcon(unit)
     if self.db.showRaidIcons then
-        local icon = GetRaidTargetIndex(unit)
-        if icon and RaidIconList[icon] then
-            return RaidIconList[icon] .. "0|t"
-        else
-            return ""
-        end
+        return GetRaidTargetIndex(unit)
     else
-        return ""
+        return nil
     end
 end
 
@@ -928,6 +889,9 @@ function addon:FrameFontUpdate()
         if frame.text then
             frame.text:SetFont(self.db.font, healthSize, self.db.fontOutline)
         end
+        if frame.texture then
+            frame.texture:SetSize(healthSize, healthSize)
+        end
     end
 end
 
@@ -984,9 +948,9 @@ function addon:DisableAddon()
     self:UnregisterEvents(self.targetFrame)
     self.targetFrame = nil
 
-    self.petFrame:Hide()
-    self:UnregisterEvents(self.petFrame)
-    self.petFrame = nil
+    -- self.petFrame:Hide()
+    -- self:UnregisterEvents(self.petFrame)
+    -- self.petFrame = nil
 end
 
 function addon:GetMiscConfig()

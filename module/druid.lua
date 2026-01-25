@@ -27,8 +27,6 @@ local L_USE_COMBO = "Displays the number of combo points."
 local L_USE_COMBO_TOOLTIP = "Displays the number of combo points."
 local L_USE_COMBO_BESIDE_PLAYER = "Displays the number of combo points next to the Player's health text.(default: beside target's health text)"
 local L_USE_COMBO_BESIDE_PLAYER_DESC = "Check to display the number of combo points to the right of Player's health."
-local L_USE_THRASH = "곰의 난타 개수 표시"
-local L_USE_THRASH_TOOLTIP = "곰의 난타 디버프 개수를 표시합니다."
 local L_USE_DRUID_ACTIVATED_SPELL = "Displays the spell icons when activating effect."
 local L_USE_DRUID_ACTIVATED_SPELL_TOOLTIP = "Displays the spell icons when activating effect."
 
@@ -39,8 +37,6 @@ if GetLocale() == "koKR" then
     L_USE_COMBO_TOOLTIP = "표범의 연계점수를 표시합니다."
     L_USE_COMBO_BESIDE_PLAYER = "표범의 연계점수를 플레이어 체력 텍스트 옆에 표시"
     L_USE_COMBO_BESIDE_PLAYER_DESC = "체크하면 표범의 연계점수를 플레이어 체력 텍스트 오른쪽에 표시합니다."
-    L_USE_THRASH = "곰의 난타 개수 표시"
-    L_USE_THRASH_TOOLTIP = "곰의 난타 디버프 개수를 표시합니다."
     L_USE_DRUID_ACTIVATED_SPELL = "발동 효과 아이콘 표시"
     L_USE_DRUID_ACTIVATED_SPELL_TOOLTIP = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
 end
@@ -70,43 +66,15 @@ function tcopy(to, from) -- "to" must be a table (possibly empty)
 end
 
 local function getComboText()
-    if (UnitPowerType("player") == 3) then -- energy
+    if UnitPowerType("player") == Enum.PowerType.Energy then -- energy
         local combo = UnitPower("player", Enum.PowerType.ComboPoints)
-        local comboText, r, g, b = "", 1.0, 0.5, 0.1
+        local r, g, b = 1.0, 0.5, 0.1
 
         if (combo <= 0) then
             return ""
         end
 
-        local mana = UnitPower("player")
-        if (mana >= ComboSkill) then
-            r = 0.1
-            g = 1.0
-            b = 0.1 -- green
-        elseif (mana >= FinishSkill) then
-            r = 0.0
-            g = 0.39
-            b = 0.88 -- blue
-        else
-            r = 1.0
-            g = 0.1
-            b = 0.1 -- red
-        end
         return (":|cff%02x%02x%02x%d|r"):format(r * 255, g * 255, b * 255, combo)
-    end
-    return ""
-end
-
-local function getThrashCount()
-    if (UnitPowerType("player") == 1) then -- rage
-
-        local name, icon, count, debufType, duration, expirationTime = AuraUtil.FindAuraByName("난타", "target",
-            "TARGET|HARMFUL") -- UnitAura("player", "집중된 분노", nil, "PLAYER|HELPFUL")
-        local r, g, b = 1.0, 0.5, 0.1
-
-        if count and count > 0 then
-            return (":|cff%02x%02x%02x%d|r"):format(r * 255, g * 255, b * 255, count)
-        end
     end
     return ""
 end
@@ -175,21 +143,6 @@ function module:init()
                 self.addon.db.class.use_combo_beside_player = value
             end,
         })
-        self.addon.guiConfig:CreateCheckBox({
-            label = L_USE_THRASH,
-            tooltip = L_USE_THRASH,
-            key = "use_thrash",
-            defaultValue = Settings.Default.True,
-            get = function()
-                if self.addon and self.addon.db then
-                    return self.addon.db.class.use_thrash
-                end
-                return
-            end,
-            set = function(value)
-                self.addon.db.class.use_thrash = value
-            end,
-        })
 
         config_added = true
     end
@@ -241,15 +194,9 @@ end
 
 function module:getTargetText()
     local text = ""
-    -- local m_cat, m_bear, aura, rank, icon, count, debufType, duration, expirationTime
-    -- local size
 
     if self.addon.db.class.use_combo and not self.addon.db.class.use_combo_beside_player then
         text = getComboText()
-    end
-
-    if self.addon.db.class.use_thrash and not self.addon.db.class.use_combo_beside_player then
-        text = text .. getThrashCount()
     end
 
     if self.addon.db.class.use_activated_spells then

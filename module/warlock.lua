@@ -97,7 +97,7 @@ function module:init()
     end
 
     self.addon.mainFrame:RegisterEvent("PLAYER_ALIVE")
-    self.addon.mainFrame:RegisterEvent("LEARNED_SPELL_IN_TAB")
+    self.addon.mainFrame:RegisterEvent("LEARNED_SPELL_IN_SKILL_LINE")
     self.addon.mainFrame:RegisterEvent("CHARACTER_POINTS_CHANGED")
 
     self:update()
@@ -171,11 +171,11 @@ function module:update()
 
 end
 
-function module:LEARNED_SPELL_IN_TAB(...)
+function module:LEARNED_SPELL_IN_SKILL_LINE(...)
     self:update()
 end
 
-module.CHARACTER_POINTS_CHANGED = module.LEARNED_SPELL_IN_TAB
+module.CHARACTER_POINTS_CHANGED = module.LEARNED_SPELL_IN_SKILL_LINE
 function module:PLAYER_ALIVE(...)
     self.addon.mainFrame:UnregisterEvent("PLAYER_ALIVE")
     self:update()

@@ -54,8 +54,6 @@ local defaultDB = {
     db_ver = 1.3,
     use_rune = true,
     use_activated_spells = true,
-    use_disease = true,
-    use_bone_shield = true,
     --	use_scourge_of_worlds = false,
 }
 
@@ -73,43 +71,6 @@ function tcopy(to, from) -- "to" must be a table (possibly empty)
         else
             to[k] = v
         end
-    end
-end
-
-local function getSize(baseSize, expirationTime, duration)
-    local size = (expirationTime - GetTime()) / duration
-    if size < 0.3 then
-        size = baseSize * .8
-    elseif size < 0.6 then
-        size = baseSize * 1.0
-    else
-        size = baseSize * 1.2
-    end
-    return size / 2
-end
-
-local function diseaseUpdator(unit, f2)
-    if not UnitExists("target") then
-        f2:SetText("")
-        return
-    end
-    name, icon, count = AuraUtil.FindAuraByName(L_SPELL_FESTERING_WOUND, "target", "PLAYER|HARMFUL")
-
-    if count and count > 0 then
-        f2:SetText(count)
-    else
-        f2:SetText("")
-    end
-end
-
-local function boneShieldUpdator(unit, f1)
-
-    name, icon, count = AuraUtil.FindAuraByName(L_SPELL_BONE_SHIELD, "player", "PLAYER|HELPFUL")
-
-    if count and count > 0 then
-        f1:SetText(count)
-    else
-        f1:SetText("")
     end
 end
 
@@ -132,14 +93,6 @@ function module:init()
 
     if self.addon.db.class.use_activated_spells then
         module:EnableActivatedSpell()
-    end
-
-    if self.addon.db.class.use_bone_shield then
-        self:EnableBoneShield()
-    end
-
-    if self.addon.db.class.use_disease then
-        self:EnableDisease()
     end
 
     if loaded == false then
@@ -178,40 +131,6 @@ function module:init()
                 end
             end,
         })
-        self.addon.guiConfig:CreateCheckBox({
-            label = L_USE_BONE_SHIELD,
-            tooltip = L_USE_BONE_SHIELD_TOOLTIP,
-            key = "use_bone_shield",
-            defaultValue = Settings.Default.True,
-            get = function()
-                return module.addon.db.class.use_bone_shield
-            end,
-            set = function(value)
-                module.addon.db.class.use_bone_shield = value
-                if module.addon.db.class.use_bone_shield then
-                    module:EnableBoneShield()
-                else
-                    module:DisableBoneShield()
-                end
-            end,
-        })
-        self.addon.guiConfig:CreateCheckBox({
-            label = L_USE_DISEASE,
-            tooltip = L_USE_DISEASE_TOOLTIP,
-            key = "use_disease",
-            defaultValue = Settings.Default.True,
-            get = function()
-                return module.addon.db.class.use_disease
-            end,
-            set = function(value)
-                module.addon.db.class.use_disease = value
-                if module.addon.db.class.use_disease then
-                    module:EnableDisease()
-                else
-                    module:DisableDisease()
-                end
-            end,
-        })
 
         loaded = true
     end
@@ -245,27 +164,6 @@ function module:SPELL_ACTIVATION_OVERLAY_GLOW_HIDE(...)
     end
 end
 
-function module:getAuraTypeCount(unit, auraType, filter)
-    if not UnitExists(unit) then return end
-
-    local i = 1
-    aCount = 0
-
-    name, icon, count, debufType, duration, expirationTime = UnitAura(unit, i, filter)
-    while name do
-        if debufType == auraType then
-            if count > 0 then
-                aCount = aCount + count
-            else
-                aCount = aCount + 1
-            end
-        end
-        i = i + 1
-        name, icon, count, debufType, duration, expirationTime = UnitAura(unit, i, filter)
-    end
-    return aCount
-end
-
 function module:EnableRune()
     if not self.addon.playerFrame.runes then
         self.addon.playerFrame.runes = self.addon.playerFrame:CreateFontString(nil, "OVERLAY")
@@ -276,7 +174,6 @@ function module:EnableRune()
     end
     self.addon.playerFrame.runes:Show()
     self.addon.mainFrame:RegisterEvent("RUNE_POWER_UPDATE")
-    --self.addon.mainFrame:RegisterEvent("RUNE_TYPE_UPDATE")
 end
 
 function module:DisableRune()
@@ -284,7 +181,6 @@ function module:DisableRune()
         self.addon.playerFrame.runes:Hide()
     end
     self.addon.mainFrame:UnregisterEvent("RUNE_POWER_UPDATE")
-    --self.addon.mainFrame:UnregisterEvent("RUNE_TYPE_UPDATE")
 end
 
 function module:EnableActivatedSpell()
@@ -299,60 +195,9 @@ function module:DisableActivatedSpell()
     self.addon.mainFrame:UnregisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_HIDE")
 end
 
-function module:EnableBoneShield()
-    --print("EnableBoneShield")
-    if not self.addon.playerFrame.bone_shield then
-        self.addon.playerFrame.bone_shield = self.addon.playerFrame:CreateFontString(nil, "OVERLAY")
-        self.addon.playerFrame.bone_shield:SetFont(self.addon.db.font, self.addon.db.fontSizePower,
-            self.addon.db.fontOutline)
-        self.addon.playerFrame.bone_shield:SetPoint("LEFT", self.addon.playerFrame.health, "RIGHT")
-        self.addon.playerFrame.bone_shield:SetAlpha(self.addon.db.unit.player.alpha)
-        self.addon.playerFrame.bone_shield:SetJustifyH("LEFT")
-        self.addon.playerFrame.bone_shield:SetTextColor(0.50, 0.32, 0.55)
-    end
-    self.addon.playerFrame.bone_shield:Show()
-    self:RegisterUpdators(boneShieldUpdator, self.addon.playerFrame.bone_shield)
-end
-
-function module:DisableBoneShield()
-    --print("DisableBoneShield")
-    if self.addon.playerFrame.bone_shield then
-        self.addon.playerFrame.bone_shield:Hide()
-    end
-    self:UnregisterUpdators(boneShieldUpdator)
-end
-
-function module:EnableDisease()
-    --print("EnableDisease")
-    if not self.addon.targetFrame.disease then
-        self.addon.targetFrame.disease = self.addon.targetFrame:CreateFontString(nil, "OVERLAY")
-        self.addon.targetFrame.disease:SetFont(self.addon.db.font, self.addon.db.fontSizePower, self.addon.db.fontOutline)
-        self.addon.targetFrame.disease:SetPoint("RIGHT", self.addon.targetFrame.health, "LEFT")
-        self.addon.targetFrame.disease:SetAlpha(self.addon.db.unit.player.alpha)
-        self.addon.targetFrame.disease:SetJustifyH("RIGHT")
-        self.addon.targetFrame.disease:SetTextColor(0.50, 0.32, 0.55)
-    end
-    self.addon.targetFrame.disease:Show()
-    self:RegisterUpdators(diseaseUpdator, self.addon.targetFrame.disease)
-end
-
-function module:DisableDisease()
-    --print("DisableDisease")
-    if self.addon.targetFrame.disease then
-        self.addon.targetFrame.disease:Hide()
-    end
-    self:UnregisterUpdators(diseaseUpdator)
-end
-
 function module:getTargetText()
     text = ""
 
-    --	if self.addon.db.class.use_scourge_of_worlds then
-    --		name, icon = AuraUtil.FindAuraByName("세계의 스컬지", "target", "PLAYER|HARMFUL")
-    --		if name and icon then
-    --			text = text .. (":|T%s:%d|t"):format(icon, self.addon.db.fontSizeHealth/2)
-    --		end
-    --	end
     if self.addon.db.class.use_activated_spells then
         for texture, cnt in pairs(activation_spells) do
             if cnt > 0 then

@@ -17,8 +17,6 @@ local select = select
 if select(2, UnitClass("player")) ~= "ROGUE" or not module then return end
 
 local loaded = false
-local ComboSkill = 45 -- 주력 콤보스킬 기력
-local FinishSkill = 35 -- 주력 마무리스킬 기력
 
 local L_ROGUE_CONFIG = "Rogue Setting"
 local L_USE_ROGUE_ACTIVATED_SPELL = "Displays the spell icons when activating effect."
@@ -78,11 +76,6 @@ function module:init()
         module:EnableActivatedSpell()
     end
 
-    self.addon.mainFrame:RegisterEvent("PLAYER_ALIVE")
-    self.addon.mainFrame:RegisterEvent("LEARNED_SPELL_IN_TAB")
-    self.addon.mainFrame:RegisterEvent("CHARACTER_POINTS_CHANGED")
-    self:update()
-
     if loaded == false then
         self.addon.guiConfig:CreateLabel(L_ROGUE_CONFIG)
         self.addon.guiConfig:CreateCheckBox({
@@ -129,27 +122,6 @@ function module:init()
     loaded = true
 end
 
-function module:update()
-    if GetSpecialization() == 1 then
-        ComboSkill = 55 -- 절단 GetSpellInfo(1329) -- 절단
-    elseif GetSpecialization() == 2 then
-        ComboSkill = 50 -- 사브르 베기 GetSpellInfo(200758) -- 사악한 일격
-    elseif GetSpecialization() == 3 then
-        ComboSkill = 35 -- 기습 GetSpellInfo(16511) -- 과다출혈
-    end
-end
-
-function module:LEARNED_SPELL_IN_TAB(...)
-    self:update()
-end
-
-module.CHARACTER_POINTS_CHANGED = module.LEARNED_SPELL_IN_TAB
-
-function module:PLAYER_ALIVE(...)
-    self.addon.mainFrame:UnregisterEvent("PLAYER_ALIVE")
-    self:update()
-end
-
 function module:EnableActivatedSpell()
     activation_spells = {}
     self.addon.mainFrame:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW")
@@ -186,28 +158,12 @@ end
 
 function module:getComboText()
     local combo = UnitPower("player", Enum.PowerType.ComboPoints)
-    local comboText, r, g, b = "", 1.0, 0.5, 0.1
+    local r, g, b = 1.0, 0.5, 0.1
 
     if (combo <= 0) then
         return ""
     end
 
-    if (UnitPowerType("player") == 3) then -- energy
-        local mana = UnitPower("player")
-        if (mana >= ComboSkill) then
-            r = 0.1
-            g = 1.0
-            b = 0.1 -- green
-        elseif (mana >= FinishSkill) then
-            r = 0.0
-            g = 0.39
-            b = 0.88 -- blue
-        else
-            r = 1.0
-            g = 0.1
-            b = 0.1 -- red
-        end
-    end
     return (":|cff%02x%02x%02x%d|r"):format(r * 255, g * 255, b * 255, combo)
 end
 
@@ -217,9 +173,6 @@ function module:getPlayerText()
         return text
     end
 end
-
--- function module:getTargetText()
--- end
 
 function module:getTargetText()
     local text = ""

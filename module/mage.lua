@@ -18,11 +18,6 @@ if select(2, UnitClass("player")) ~= "MAGE" or not module then return end
 local tcopy
 local config_added = false
 
---local L_FINGERS_OF_FROST = "서리의 손가락"
---local L_BRAIN_FREEZE = "두뇌 빙결"
---local L_SHATTER = "산산조각"
---local L_FROST_NOVA = "얼음 회오리"
---local L_FROSTJAW = "서리투성이 턱"
 local L_ICICLE = "Icicle"
 local L_MAGE_CONFIG = "Mage Setting"
 local L_USE_MAGE_ACTIVATED_SPELL = "Displays the spell icons when activating effect."
@@ -32,17 +27,12 @@ local L_USE_MAGE_ARCANE_COUNT_TOOLTIP = "Displays the number of Arcane Charges o
 
 -- koKR locale
 if GetLocale() == "koKR" then
-    --L_FINGERS_OF_FROST = "서리의 손가락"
-    --L_BRAIN_FREEZE = "두뇌 빙결"
-    --L_SHATTER = "산산조각"
-    --L_FROST_NOVA = "얼음 회오리"
-    --L_FROSTJAW = "서리투성이 턱"
     L_ICICLE = "고드름"
     L_MAGE_CONFIG = "마법사 설정"
     L_USE_MAGE_ACTIVATED_SPELL = "발동 효과 아이콘 표시"
     L_USE_MAGE_ACTIVATED_SPELL_TOOLTIP = "전문화별 발동 효과 발동시 아이콘을 표시합니다."
-    L_USE_MAGE_ARCANE_COUNT = "비전 충전물의 갯수, 냉기 고드름 표시"
-    L_USE_MAGE_ARCANE_COUNT_TOOLTIP = "비전 전문화의 비전 충전물의 갯수, 냉기 전문화의 고드름 갯수를 표시합니다."
+    L_USE_MAGE_ARCANE_COUNT = "비전 충전물의 갯수 표시"
+    L_USE_MAGE_ARCANE_COUNT_TOOLTIP = "비전 전문화의 비전 충전물의 갯수를 표시합니다."
 end
 
 local activation_spells = {}
@@ -168,30 +158,6 @@ function module:getTargetText()
     return text
 end
 
---
---function module:getTargetHealthColor()
---	local name
---
---	if self.config[L_SHATTER].use and self.addon.db.class.use_shatter then
---		if self.config[L_FINGERS_OF_FROST].use then
---			name = UnitAura("player", L_FINGERS_OF_FROST, nil, "HELPFUL")
---			if name then
---				return true, 0.75, 0.75, 1.0 -- 파란색? 하늘색?
---			end
---		end
---		name = UnitAura("target", L_FROST_NOVA, nil, "HARMFUL")
---		if name then
---			return true, 0.75, 0.75, 1.0 -- 파란색? 하늘색?
---		end
---		if self.config[L_FROSTJAW].use then
---			name = UnitAura("target", L_FROSTJAW, nil, "HARMFUL")
---			if name then
---				return true, 0.75, 0.75, 1.0 -- 파란색? 하늘색?
---			end
---		end
---	end
---end
-
 -- @returns number
 function module:getPlayerText()
     if self.addon.db.class.show_arcane_count then
@@ -200,8 +166,6 @@ function module:getPlayerText()
             if arcanes > 0 then
                 return arcanes
             end
-        elseif GetSpecialization() == 3 then
-            return self:getAuraCount("player", L_ICICLE, "PLAYER|HELPFUL")
         end
     end
     return ""

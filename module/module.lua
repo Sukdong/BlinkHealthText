@@ -57,24 +57,14 @@ function module:AddMiscConfig(opt)
     table.insert(self.miscOptions, opt)
 end
 
+-- @deprecated 120000
 function module:getAuraInfo(unit, spell, filter)
     if not UnitExists(unit) then return end
 
     return AuraUtil.FindAuraByName(spell, unit, filter)
-
-    --	local i = 1
-    --	local countText, r, g, b = "", 1.0, 0.5, 0.1
-    --
-    --	local name, rank, icon, count, debufType, duration, expirationTime = UnitAura(unit, i, filter)
-    --	while name do
-    --		if name == spell or name:find(spell) then
-    --			return name, rank, icon, count, debufType, duration, expirationTime
-    --		end
-    --		i = i + 1
-    --		name, rank, icon, count, debufType, duration, expirationTime = UnitAura(unit, i, filter)
-    --	end
 end
 
+-- @deprecated 120000
 function module:getAuraCount(unit, spell, filter, iconOnly)
     if not UnitExists(unit) then return "" end
 
